@@ -1,0 +1,21 @@
+@model WebApp_Sample.Presentations.ViewModels.DepartmentRegisterViewModel
+@{
+    ViewData["Title"] = "部署登録";
+}
+
+<h2>部署登録</h2>
+
+<form asp-controller="Department" asp-action="Create" method="post">
+    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+    <div class="mb-3">
+        <label asp-for="Name" class="form-label"></label>
+        <input asp-for="Name" class="form-control" />
+        <span asp-validation-for="Name" class="text-danger"></span>
+    </div>
+    <button type="submit" class="btn btn-primary">登録</button>
+    <a class="btn btn-secondary" asp-controller="Department" asp-action="Index">戻る</a>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
