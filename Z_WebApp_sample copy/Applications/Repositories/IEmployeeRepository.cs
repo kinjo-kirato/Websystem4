@@ -10,4 +10,10 @@ public interface IEmployeeRepository
     /// </summary>
     /// <param name="employee">永続化対象の従業員</param>
     void Create(Employee employee);
+
+    /// <summary>
+    /// すべての従業員を取得する
+    /// </summary>
+    /// <returns>従業員リスト</returns>
+    List<Employee> FindAll();
 }
