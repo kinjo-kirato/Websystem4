@@ -1,0 +1,27 @@
+@model List<WebApp_Sample.Applications.Domains.Department>
+@{
+    ViewData["Title"] = "部署一覧";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2 class="mb-0">部署一覧</h2>
+    <a class="btn btn-primary" asp-controller="Department" asp-action="Create">部署登録</a>
+</div>
+
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>部署ID</th>
+            <th>部署名</th>
+        </tr>
+    </thead>
+    <tbody>
+    @foreach (var department in Model)
+    {
+        <tr>
+            <td>@department.Id</td>
+            <td>@department.Name</td>
+        </tr>
+    }
+    </tbody>
+</table>
