@@ -7,10 +7,6 @@
     <h2 class="mb-0">部署一覧</h2>
     <a class="btn btn-primary" asp-controller="Department" asp-action="Create">部署登録</a>
 </div>
-@if (!string.IsNullOrEmpty(ViewBag.ErrorMessage as string))
-{
-    <div class="alert alert-danger">@ViewBag.ErrorMessage</div>
-}
 
 <table class="table table-striped">
     <thead>

@@ -1,7 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using WebApp_Sample.Applications.Domains;
 using WebApp_Sample.Applications.Repositories;
-using WebApp_Sample.Exceptions;
 using WebApp_Sample.Presentations.ViewModels;
 
 namespace WebApp_Sample.Presentations.Controllers;
@@ -19,16 +18,8 @@ public class DepartmentController : Controller
     [HttpGet("")]
     public IActionResult Index()
     {
-        try
-        {
-            var departments = _departmentRepository.FindAll();
-            return View(departments);
-        }
-        catch (InternalException e)
-        {
-            ViewBag.ErrorMessage = $"部署一覧を取得できませんでした。接続先DBを確認してください。詳細: {e.Message}";
-            return View(new List<Department>());
-        }
+        var departments = _departmentRepository.FindAll();
+        return View(departments);
     }
 
     [HttpGet("Create")]
@@ -46,16 +37,8 @@ public class DepartmentController : Controller
             return View(viewModel);
         }
 
-        try
-        {
-            var department = new Department(viewModel.Name);
-            _departmentRepository.Create(department);
-            return RedirectToAction(nameof(Index));
-        }
-        catch (InternalException e)
-        {
-            ModelState.AddModelError(string.Empty, $"部署登録に失敗しました。接続先DBを確認してください。詳細: {e.Message}");
-            return View(viewModel);
-        }
+        var department = new Department(viewModel.Name);
+        _departmentRepository.Create(department);
+        return RedirectToAction(nameof(Index));
     }
 }
