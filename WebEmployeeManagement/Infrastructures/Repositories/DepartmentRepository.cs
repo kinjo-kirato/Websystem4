@@ -1,123 +1,72 @@
-using Npgsql;
-using WebEmployeeManagement.Applications.Services;
-using WebEmployeeManagement.Infrastructures.Entities;
-
+using WebEmployeeManagement.Infrastructures.Context;
+using WebEmployeeManagement.Applications.Domains;
+using WebEmployeeManagement.Applications.Repositories;
+using WebEmployeeManagement.Infrastructures.Adapters;
+using WebEmployeeManagement.Exceptions;
 namespace WebEmployeeManagement.Infrastructures.Repositories;
-
+/// <summary>
+/// ドメインオブジェクト:部署のCRUD操作インターフェイス実装
+/// </summary>
 public class DepartmentRepository : IDepartmentRepository
 {
-    private readonly string _connectionString;
+    /// <summary>
+    /// アプリケーション用DbContext
+    /// </summary>
+    private readonly AppDbContext _context;
+    /// <summary>
+    /// ドメインモデル:部署と部署エンティティの相互変換インターフェイスの実装
+    /// </summary>
+    private readonly DepartmentEntityAdapter _adapter;
 
-    public DepartmentRepository(IConfiguration configuration)
+    public DepartmentRepository(AppDbContext context, DepartmentEntityAdapter adapter)
     {
-        _connectionString = configuration["DB_CONNECTION_STRING"]
-            ?? Environment.GetEnvironmentVariable("DB_CONNECTION_STRING")
-            ?? "Host=localhost;Username=postgres;Password=training;Port=5432;Database=sql_training2;";
+        _context = context;
+        _adapter = adapter;
     }
 
-    public List<Department> GetAll()
+    /// <summary>
+    /// すべての部署を取得する
+    /// </summary>
+    /// <returns>部署のリスト</returns>
+    public List<Department> FindAll()
     {
-        using var connection = CreateConnection();
-        using var command = connection.CreateCommand();
-        command.CommandText = "SELECT department_id, department_name FROM departments ORDER BY department_id";
-
-        var departments = new List<Department>();
-        using var reader = command.ExecuteReader();
-        while (reader.Read())
+        try
         {
-            departments.Add(new Department
+            var entities = _context.Departments.ToList();
+            var results = new List<Department>();
+            foreach (var entity in entities)
             {
-                DepartmentId = reader.GetInt32(0),
-                DepartmentName = reader.GetString(1)
-            });
+                results.Add(_adapter.Restore(entity));
+            }
+            return results;
         }
-
-        return departments;
-    }
-
-    public Department? Find(int departmentId)
-    {
-        using var connection = CreateConnection();
-        using var command = connection.CreateCommand();
-        command.CommandText = "SELECT department_id, department_name FROM departments WHERE department_id = @departmentId";
-        command.Parameters.AddWithValue("departmentId", departmentId);
-
-        using var reader = command.ExecuteReader();
-        if (!reader.Read())
+        catch (Exception e)
         {
-            return null;
+            throw new InternalException(
+                "すべての部署を取得できませんでした。", e);
         }
+    }
 
-        return new Department
+    /// <summary>
+    /// 指定された部署Idの部署を取得する
+    /// </summary>
+    /// <param name="id">部署Id</param>
+    /// <returns>取得して部署</returns>
+    public Department? FindById(int id)
+    {
+        try
         {
-            DepartmentId = reader.GetInt16(0),
-            DepartmentName = reader.GetString(1)
-        };
-    }
-
-    public bool ExistsById(int departmentId)
-    {
-        using var connection = CreateConnection();
-        using var command = connection.CreateCommand();
-        command.CommandText = "SELECT COUNT(1) FROM departments WHERE department_id = @departmentId";
-        command.Parameters.AddWithValue("departmentId", departmentId);
-
-        return Convert.ToInt16(command.ExecuteScalar()) > 0;
-    }
-
-    public bool HasEmployees(int departmentId)
-    {
-        using var connection = CreateConnection();
-        using var command = connection.CreateCommand();
-        command.CommandText = "SELECT COUNT(1) FROM employees WHERE department_id = @departmentId";
-        command.Parameters.AddWithValue("departmentId", departmentId);
-
-        return Convert.ToInt32(command.ExecuteScalar()) > 0;
-    }
-
-    public void Add(Department department)
-    {
-        using var connection = CreateConnection();
-        using var command = connection.CreateCommand();
-        command.CommandText = @"
-INSERT INTO departments (department_id, department_name)
-VALUES (@departmentId, @departmentName);";
-        command.Parameters.AddWithValue("departmentId", department.DepartmentId);
-        command.Parameters.AddWithValue("departmentName", department.DepartmentName);
-        command.ExecuteNonQuery();
-    }
-
-    public void Remove(Department department)
-    {
-        using var connection = CreateConnection();
-        using var command = connection.CreateCommand();
-        command.CommandText = "DELETE FROM departments WHERE department_id = @departmentId";
-        command.Parameters.AddWithValue("departmentId", department.DepartmentId);
-        command.ExecuteNonQuery();
-    }
-
-    public void MoveEmployees(int fromDepartmentId, int toDepartmentId)
-    {
-        using var connection = CreateConnection();
-        using var command = connection.CreateCommand();
-        command.CommandText = @"
-UPDATE employees
-SET department_id = @toDepartmentId
-WHERE department_id = @fromDepartmentId;";
-        command.Parameters.AddWithValue("toDepartmentId", toDepartmentId);
-        command.Parameters.AddWithValue("fromDepartmentId", fromDepartmentId);
-        command.ExecuteNonQuery();
-    }
-
-    public void SaveChanges()
-    {
-
-    }
-
-    private NpgsqlConnection CreateConnection()
-    {
-        var connection = new NpgsqlConnection(_connectionString);
-        connection.Open();
-        return connection;
+            var result = _context.Departments.FirstOrDefault(d => d.DeptId == id);
+            if (result == null)
+            {
+                return null;
+            }
+            return _adapter.Restore(result);
+        }
+        catch (Exception e)
+        {
+            throw new InternalException(
+                "指定された部署Idの部署を取得できませんでした。", e);
+        }
     }
 }

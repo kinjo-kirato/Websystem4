@@ -1,132 +1,51 @@
-using Npgsql;
-using WebEmployeeManagement.Applications.Interfaces;
+using WebEmployeeManagement.Infrastructures.Context;
+using WebEmployeeManagement.Applications.Domains;
+using WebEmployeeManagement.Applications.Repositories;
+using WebEmployeeManagement.Infrastructures.Adapters;
+using WebEmployeeManagement.Exceptions;
 using WebEmployeeManagement.Infrastructures.Entities;
-using Microsoft.Extensions.Configuration;
-using System;
-using System.Collections.Generic;
-using WebEmployeeManagement.Applications.Services;
-using WebEmployeeManagement.Infrastructures.Repositories;
-
 namespace WebEmployeeManagement.Infrastructures.Repositories;
-
+/// <summary>
+/// ドメインオブジェクト:従業員のCRUD操作インターフェイスの実装
+/// </summary>
 public class EmployeeRepository : IEmployeeRepository
-{    private readonly string _connectionString;
+{
+    /// <summary>
+    /// アプリケーション用DbContext
+    /// </summary>
+    private readonly AppDbContext _context;
+    /// <summary>
+    /// ドメインモデル:従業員と従業員エンティティの相互変換インターフェイスの実装
+    /// </summary>
+    private readonly EmployeeEntityAdapter _adapter;
 
-    public EmployeeRepository(IConfiguration configuration)
+    /// <summary>
+    /// コンストラクタ
+    /// </summary>
+    /// <param name="context"></param>
+    /// <param name="adapter"></param>
+    public EmployeeRepository(AppDbContext context, EmployeeEntityAdapter adapter)
     {
-        _connectionString = configuration["DB_CONNECTION_STRING"]
-            ?? Environment.GetEnvironmentVariable("DB_CONNECTION_STRING")
-            ?? "Host=localhost;Username=postgres;Password=training;Port=5432;Database=sql_training2;";
+        _context = context;
+        _adapter = adapter;
     }
 
-    public List<Employee> GetAll()
+    /// <summary>
+    /// 従業員を永続化する
+    /// </summary>
+    /// <param name="employee">永続化対象の従業員</param>
+    public void Create(EmployeeEntity employee)
     {
-        using var connection = CreateConnection();
-        using var command = connection.CreateCommand();
-        command.CommandText = "SELECT employee_id, employee_name FROM employees ORDER BY employee_id";
-
-        var employees = new List<Employee>();
-        using var reader = command.ExecuteReader();
-        while (reader.Read())
+        try
         {
-            employees.Add(new Employee
-            {
-                EmployeeId = reader.GetInt32(0),
-                EmployeeName = reader.GetString(1)
-            });
+            var entity = _adapter.Convert(employee);
+            _context.Employees.Add(entity);
+            _context.SaveChanges();
         }
-
-        return employees;
-    }
-
-    public Employee? Find(int employeeId)
-    {
-        using var connection = CreateConnection();
-        using var command = connection.CreateCommand();
-        command.CommandText = "SELECT employee_id, employee_name FROM employees WHERE employee_id = @employeeId";
-        command.Parameters.AddWithValue("employeeId", employeeId);
-
-        using var reader = command.ExecuteReader();
-        if (!reader.Read())
+        catch (Exception e)
         {
-            return null;
+            throw new InternalException(
+                "従業員の永続化ができませんでした。", e);
         }
-
-        return new Employee
-        {
-            EmployeeId = reader.GetInt16(0),
-            EmployeeName = reader.GetString(1)
-        };
-    }
-
-    public bool ExistsById(int departmentId)
-    {
-        using var connection = CreateConnection();
-        using var command = connection.CreateCommand();
-        command.CommandText = "SELECT COUNT(1) FROM departments WHERE department_id = @departmentId";
-        command.Parameters.AddWithValue("departmentId", departmentId);
-
-        return Convert.ToInt16(command.ExecuteScalar()) > 0;
-    }
-
-    public bool HasEmployees(int departmentId)
-    {
-        using var connection = CreateConnection();
-        using var command = connection.CreateCommand();
-        command.CommandText = "SELECT COUNT(1) FROM employees WHERE department_id = @departmentId";
-        command.Parameters.AddWithValue("departmentId", departmentId);
-
-        return Convert.ToInt32(command.ExecuteScalar()) > 0;
-    }
-
-    public void Add(Department department)
-    {
-        using var connection = CreateConnection();
-        using var command = connection.CreateCommand();
-        command.CommandText = @"
-INSERT INTO departments (department_id, department_name)
-VALUES (@departmentId, @departmentName);";
-        command.Parameters.AddWithValue("departmentId", department.DepartmentId);
-        command.Parameters.AddWithValue("departmentName", department.DepartmentName);
-        command.ExecuteNonQuery();
-    }
-
-    public void Remove(Department department)
-    {
-        using var connection = CreateConnection();
-        using var command = connection.CreateCommand();
-        command.CommandText = "DELETE FROM departments WHERE department_id = @departmentId";
-        command.Parameters.AddWithValue("departmentId", department.DepartmentId);
-        command.ExecuteNonQuery();
-    }
-
-    public void MoveEmployees(int fromDepartmentId, int toDepartmentId)
-    {
-        using var connection = CreateConnection();
-        using var command = connection.CreateCommand();
-        command.CommandText = @"
-UPDATE employees
-SET department_id = @toDepartmentId
-WHERE department_id = @fromDepartmentId;";
-        command.Parameters.AddWithValue("toDepartmentId", toDepartmentId);
-        command.Parameters.AddWithValue("fromDepartmentId", fromDepartmentId);
-        command.ExecuteNonQuery();
-    }
-
-    public void SaveChanges()
-    {
-
-    }
-
-    private NpgsqlConnection CreateConnection()
-    {
-        var connection = new NpgsqlConnection(_connectionString);
-        connection.Open();
-        return connection;
-    }
-
-    public void Add(Employee employee)
-    {
-        throw new NotImplementedException();
     }
 }

@@ -1,0 +1,15 @@
+@model PRGForm
+@{
+    ViewData["Title"] = "結果";
+}
+
+<h2>@ViewData["Title"]</h2>
+
+<p>
+    入力された文字列： <strong>@Model.Text</strong><br />
+    文字数： <strong>@Model.Length</strong> 文字
+</p>
+
+<form asp-action="Back" asp-controller="PRG" method="get">
+    <button type="submit" class="btn btn-primary">戻る</button>
+</form>

@@ -1,30 +1,28 @@
-using WebEmployeeManagement.Applications.Interfaces;
-using WebEmployeeManagement.Infrastructures.DataAccess;
-using WebEmployeeManagement.Applications.Services;
-using WebEmployeeManagement.Infrastructures.Repositories;
-using WebEmployeeManagement.Infrastructures.Entities;
+using WebEmployeeManagement.Presentations.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
-
+// ControllerやViewの依存関係を構築する
 builder.Services.AddControllersWithViews();
-builder.Services.AddScoped<IDepartmentRepository, DepartmentRepository>();
-builder.Services.AddScoped<IDepartmentService, DepartmentService>();
-builder.Services.AddScoped<IEmployeeRepository, EmployeeRepository>();
-builder.Services.AddScoped<IEmployeeService, EmployeeService>();
 
-builder.Services.Configure<Microsoft.AspNetCore.Mvc.Razor.RazorViewEngineOptions>(options =>
-{
-    options.ViewLocationFormats.Clear();
-    options.ViewLocationFormats.Add("/Presentations/Views/{1}/{0}.cshtml");
-    options.ViewLocationFormats.Add("/Presentations/Views/Shared/{0}.cshtml");
-});
+// アプリケーションの依存関係を構築する
+builder.Services.SettingDependencyInjection(builder.Configuration);
 
 var app = builder.Build();
 
-DbAccsess.Initialize();
+// Configure the HTTP request pipeline.
+if (!app.Environment.IsDevelopment())
+{
+    app.UseExceptionHandler("/Home/Error");
+    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
+    app.UseHsts();
+}
 
+app.UseHttpsRedirection();
 app.UseStaticFiles();
+
 app.UseRouting();
+
+app.UseAuthorization();
 
 app.MapControllerRoute(
     name: "default",
