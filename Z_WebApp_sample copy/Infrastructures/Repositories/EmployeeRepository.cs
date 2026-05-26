@@ -1,3 +1,4 @@
+using Microsoft.EntityFrameworkCore;
 using WebApp_Sample.Infrastructures.Context;
 using WebApp_Sample.Applications.Domains;
 using WebApp_Sample.Applications.Repositories;
@@ -16,28 +17,27 @@ public class EmployeeRepository : IEmployeeRepository
     /// <summary>
     /// ドメインモデル:従業員と従業員エンティティの相互変換インターフェイスの実装
     /// </summary>
-    private readonly EmployeeEntityAdapter _adapter;
-
+    private readonly EmployeeEntityAdapter _employeeAdapter;
     /// <summary>
-    /// コンストラクタ
+    /// ドメインモデル:部署と部署エンティティの相互変換インターフェイスの実装
     /// </summary>
-    /// <param name="context"></param>
-    /// <param name="adapter"></param>
-    public EmployeeRepository(AppDbContext context, EmployeeEntityAdapter adapter)
+    private readonly DepartmentEntityAdapter _departmentAdapter;
+
+    public EmployeeRepository(
+        AppDbContext context,
+        EmployeeEntityAdapter employeeAdapter,
+        DepartmentEntityAdapter departmentAdapter)
     {
         _context = context;
-        _adapter = adapter;
+        _employeeAdapter = employeeAdapter;
+        _departmentAdapter = departmentAdapter;
     }
 
-    /// <summary>
-    /// 従業員を永続化する
-    /// </summary>
-    /// <param name="employee">永続化対象の従業員</param>
     public void Create(Employee employee)
     {
         try
         {
-            var entity = _adapter.Convert(employee);
+            var entity = _employeeAdapter.Convert(employee);
             _context.Employees.Add(entity);
             _context.SaveChanges();
         }
@@ -45,6 +45,33 @@ public class EmployeeRepository : IEmployeeRepository
         {
             throw new InternalException(
                 "従業員の永続化ができませんでした。", e);
+        }
+    }
+
+    public List<Employee> FindAll()
+    {
+        try
+        {
+            var departmentMap = _context.Departments
+                .AsNoTracking()
+                .ToDictionary(d => d.DeptId, d => _departmentAdapter.Restore(d));
+
+            var employees = _context.Employees.AsNoTracking().ToList();
+            var results = new List<Employee>();
+            foreach (var entity in employees)
+            {
+                Department? department = null;
+                if (entity.DeptId.HasValue && departmentMap.TryGetValue(entity.DeptId.Value, out var dept))
+                {
+                    department = dept;
+                }
+                results.Add(new Employee(entity.EmpId, entity.EmpName, department));
+            }
+            return results;
+        }
+        catch (Exception e)
+        {
+            throw new InternalException("従業員一覧を取得できませんでした。", e);
         }
     }
 }

@@ -1,0 +1,29 @@
+@model List<WebApp_Sample.Applications.Domains.Employee>
+@{
+    ViewData["Title"] = "従業員一覧";
+}
+
+<h2>従業員一覧</h2>
+@if (!string.IsNullOrEmpty(ViewBag.ErrorMessage as string))
+{
+    <div class="alert alert-danger">@ViewBag.ErrorMessage</div>
+}
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>社員ID</th>
+            <th>氏名</th>
+            <th>部署</th>
+        </tr>
+    </thead>
+    <tbody>
+    @foreach (var employee in Model)
+    {
+        <tr>
+            <td>@employee.Id</td>
+            <td>@employee.Name</td>
+            <td>@(employee.Department?.Name ?? "未配属")</td>
+        </tr>
+    }
+    </tbody>
+</table>

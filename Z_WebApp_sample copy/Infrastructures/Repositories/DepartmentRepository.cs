@@ -69,4 +69,24 @@ public class DepartmentRepository : IDepartmentRepository
                 "指定された部署Idの部署を取得できませんでした。", e);
         }
     }
+
+
+    /// <summary>
+    /// 部署を永続化する
+    /// </summary>
+    /// <param name="department">永続化対象の部署</param>
+    public void Create(Department department)
+    {
+        try
+        {
+            var entity = _adapter.Convert(department);
+            _context.Departments.Add(entity);
+            _context.SaveChanges();
+        }
+        catch (Exception e)
+        {
+            throw new InternalException("部署の永続化ができませんでした。", e);
+        }
+    }
+
 }
