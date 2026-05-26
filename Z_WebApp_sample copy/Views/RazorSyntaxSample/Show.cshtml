@@ -1,0 +1,29 @@
+@* 
+    リスト4-3 Razor構文の利用 
+*@
+
+@model List<SampleForm> // SampleFormのリストをModelとして受け取る（型を明示）
+@{
+    ViewData["Title"] = "Razor構文の利用"; // ページタイトルをViewDataに設定
+}
+
+<h2>@ViewData["Title"]</h2> <!-- タイトルをHTMLの見出しとして表示 -->
+
+<!-- 表形式で一覧を表示 -->
+<table class="table table-bordered"> <!-- Bootstrapのスタイルを適用した表 -->
+    <thead> <!-- 表のヘッダー -->
+        <tr> <!-- ヘッダー行 -->
+            <th>氏名</th> <!-- 氏名列のヘッダー -->
+            <th>年齢</th> <!-- 年齢列のヘッダー -->
+        </tr>
+    </thead>
+    <tbody> <!-- 表の本体 -->
+        @foreach (SampleForm item in (List<SampleForm>)ViewData["list"]!) // 受け取ったリストを1件ずつ処理
+        {
+            <tr> <!-- データ行 -->
+                <td>@item.Name</td> <!-- 氏名を表示 -->
+                <td>@item.Age</td> <!-- 年齢を表示 -->
+            </tr>
+        }
+    </tbody>
+</table>

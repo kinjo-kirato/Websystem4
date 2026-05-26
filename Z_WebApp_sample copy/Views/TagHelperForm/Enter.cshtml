@@ -1,0 +1,34 @@
+@model SampleForm
+@{
+    ViewData["Title"] = "HTML Formを生成するタグヘルパー";
+}
+<h2>@ViewData["Title"]</h2>
+@*
+   使用するコントローラ:TagHelperFormController
+   実行するアクションメソッド:Confirm()メソッド
+*@
+<form asp-controller="FormSample" asp-action="Result" method="post">
+    @Html.AntiForgeryToken() @* CSRFトークンの生成 *@
+    @* SampleFormのNameプロパティにバインドされる *@
+    <label asp-for="Name" class="form-label"></label>
+    <input asp-for="Name" class="form-control" />
+    @* Nameプロパティのバリデーションエラーを表示 *@
+    <span asp-validation-for="Name" class="text-danger"></span>
+    <br />
+    @* SampleFormのAgeプロパティにバインドされる *@
+    <label asp-for="Age" class="form-label"></label>
+    <input asp-for="Age" class="form-control" />
+    @* Ageプロパティのバリデーションエラーを表示 *@
+    <span asp-validation-for="Age" class="text-danger"></span>
+    <br />
+    @* SampleFormのPrefecturesIdプロパティにバインドされる *@
+    <label asp-for="PrefecturesId" class="form-label"></label>
+    <select asp-for="PrefecturesId" asp-items="Model.PrefecturesList" class="form-control"></select>
+    @* PrefecturesIdプロパティのバリデーションエラーを表示 *@
+    <span asp-validation-for="PrefecturesId" class="text-danger"></span>
+    @* [送信]ボタン *@
+    <br />
+    <div class="d-flex justify-content-center">
+        <button type="submit">送信</button>
+    </div>
+</form>
